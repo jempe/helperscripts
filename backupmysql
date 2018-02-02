@@ -1,5 +1,5 @@
 #!/bin/bash
-MYSQLPASSWORD=passwordhere
+MYSQLPASSWORD='passwordhere'
 BACKUPFOLDER=/path/to/backup/folder
 
 TODAY=$(date +'%Y-%m-%d')
