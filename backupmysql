@@ -1,0 +1,56 @@
+#!/bin/bash
+MYSQLPASSWORD=passwordhere
+BACKUPFOLDER=/path/to/backup/folder
+
+TODAY=$(date +'%Y-%m-%d')
+WEEKAGO=$(date -d @$(( $(date +"%s") - 604800)) +"%Y-%m-%d")
+dbs=$(mysql -u root -p$MYSQLPASSWORD -e 'show databases;' | grep "[a-zA-Z0-9]")
+
+FOLDER="/tmp/$TODAY"
+BACKUPFILE=$BACKUPFOLDER"/backup_"$TODAY".tar.gz"
+OLDBACKUPFILE=$BACKUPFOLDER"/backup_"$WEEKAGO".tar.gz"
+
+if [ -f "$BACKUPFILE" ];
+then
+	echo "backup file already exists " $BACKUPFILE 
+else
+	mkdir $FOLDER
+
+	isdb="no"
+
+	for db in $dbs;
+	do
+		if [ "$isdb" = "yes" ]; then
+			if [ "$db" = "information_schema" ]; 
+			then
+				echo "don't backup information_schema"
+			elif [ "$db" = "mysql" ]; 
+			then
+				echo "don't backup mysql"
+			elif [ "$db" = "performance_schema" ]; 
+			then
+				echo "don't backup performance_schema"
+			elif [ "$db" = "sys" ]; 
+			then
+				echo "don't backup sys"
+			else
+				echo "backing up $db"
+				mysqldump -u root -p$MYSQLPASSWORD $db > $FOLDER"/"$db".sql"
+			fi
+		fi
+
+		if [ "$db" = "Database" ]; then
+			isdb="yes"
+		fi
+	done
+
+	tar -cvzf $BACKUPFILE $FOLDER
+fi 
+
+if [ -f "$OLDBACKUPFILE" ];
+then
+	echo "delete old backup " $OLDBACKUPFILE
+	rm $OLDBACKUPFILE
+else
+	echo "old backup file doesn't exist " $OLDBACKUPFILE
+fi
